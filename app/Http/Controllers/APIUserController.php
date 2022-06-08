@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
-class UserController extends Controller
+class APIUserController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -40,20 +40,25 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validData = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email:dns|unique:users',
-            'password' => 'required|min:8',
-            'username' => 'required|unique:users',
-            'nohp' => 'required|min:12|max:12'
-        ]);
+        // dd($request);
+        try {
+            $validData = $request->validate([
+                'name' => 'required',
+                'email' => 'required|email:dns|unique:users',
+                'username' => 'required|unique:users',
+                'password' => 'required|min:8',
+                'nohp' => 'required|min:12|max:12'
+            ]);
 
-        $validData['password'] = bcrypt($validData['password']);
+            $validData['password'] = bcrypt($validData['password']);
 
-        // dd($validData);
-        User::create($validData);
+            // dd($validData);
+            User::create($validData);
 
-        return redirect('/login')->with('success', 'Registrasi berhasil');
+            return response("Register User Berhasil", 200);
+        } catch (\Exception $e) {
+            return response("Gagal Melakukan Register", 400);
+        }
     }
 
     /**
@@ -86,44 +91,29 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $user = Auth::user();
         $this->validate($request, [
             'name' => "required",
             'username' => "required",
             'nohp' => "required",
-            'avatar' => "mimes:jpeg,jpg,png"
+            // 'avatar' => "mimes:jpeg,jpg,png"
         ]);
 
-        $userUpdate = User::where('id', $user->id)->first();
+        $userUpdate = User::where('id', $id)->first();
 
-        if ($request->hasFile("avatar")) {
-            $url = $request->file('avatar')->store('profile');
+        $userUpdate->update([
+            "email" => $request->email,
+            "name" => $request->name,
+            "username" => $request->username,
+            "nohp" => $request->nohp
+        ]);
 
-            if($user->avatar != 'images/profile.jpg'){
-                File::delete($user->avatar);
-            }
+        $userUpdate->save();
 
-            $userUpdate->update([
-                "name" => $request->name,
-                "username" => $request->username,
-                "nohp" => $request->nohp,
-                "avatar" => "storage/" . $url
-            ]);
-            $userUpdate->save();
-        }else{
-
-            $userUpdate->update([
-                "name" => $request->name,
-                "username" => $request->username,
-                "nohp" => $request->nohp
-            ]);
-
-            $userUpdate->save();
-        }
-        // dd($userUpdate);
-        return redirect('/User/profile')->with('success', 'Registrasi berhasil');
+        return response()->json([
+            'message' => 'Success'
+        ]);
     }
 
     /**

@@ -80,7 +80,7 @@ Route::get('/dashboard/kuliner/create', function(){
     ]);
 })->middleware('auth')->middleware('admin');
 Route::resource('/dashboard/kuliner', DashboardKulinerController::class)->middleware('auth')->middleware('admin');
-Route::get('/dashboard/home', function(){  
+Route::get('/dashboard/home', function(){
     $user = Auth::user();
     return view('Dashboard.home', [
         'user'=>$user
